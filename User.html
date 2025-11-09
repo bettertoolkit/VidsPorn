@@ -1,0 +1,1381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>vids-porn - Unlimited Adult Videos</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    
+    <style>
+        :root {
+            --bg-dark: #121212;
+            --bg-card: #1e1e1e;
+            --accent: #e50914;
+            --text: #ffffff;
+            --text-secondary: #b3b3b3;
+            --border: #333333;
+        }
+
+        .light-theme {
+            --bg-dark: #f5f5f5;
+            --bg-card: #ffffff;
+            --accent: #e50914;
+            --text: #121212;
+            --text-secondary: #666666;
+            --border: #dddddd;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text);
+            transition: background-color 0.3s, color 0.3s;
+            padding-bottom: 60px; /* Space for bottom nav */
+        }
+
+        /* Splash Screen */
+        #splashScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #121212 0%, #1a1a1a 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .splash-logo {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        .splash-tagline {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+        }
+
+        .splash-countdown {
+            font-size: 1.1rem;
+            color: var(--text);
+            background: rgba(229, 9, 20, 0.2);
+            padding: 10px 20px;
+            border-radius: 20px;
+            margin-top: 20px;
+        }
+
+        .age-warning {
+            background: rgba(229, 9, 20, 0.1);
+            border: 1px solid var(--accent);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+            max-width: 400px;
+        }
+
+        /* Header */
+        .header {
+            background-color: var(--bg-card);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--accent);
+        }
+
+        .search-bar {
+            flex: 1;
+            max-width: 400px;
+            margin: 0 20px;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 10px 15px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background-color: var(--bg-dark);
+            color: var(--text);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .header-btn {
+            background: none;
+            border: none;
+            color: var(--text);
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        /* Promotion Slider */
+        .promo-slider {
+            position: relative;
+            width: 100%;
+            height: 200px;
+            overflow: hidden;
+            margin: 20px 0;
+            border-radius: 10px;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+
+        .slide.active {
+            opacity: 1;
+        }
+
+        .slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+
+        .slider-dots {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: rgba(255,255,255,0.5);
+            cursor: pointer;
+        }
+
+        .dot.active {
+            background-color: white;
+        }
+
+        /* Banner Ads */
+        .banner-ad {
+            width: 100%;
+            margin: 20px auto;
+            text-align: center;
+            background: var(--bg-card);
+            border-radius: 10px;
+            overflow: hidden;
+            max-width: 970px; /* Max width for larger banners */
+        }
+
+        .banner-ad img {
+            width: 100%;
+            display: block;
+            object-fit: cover;
+        }
+
+        .banner-ad.small img {
+            max-height: 80px;
+        }
+
+        .banner-ad.medium img {
+            max-height: 120px;
+        }
+
+        .banner-ad.large img {
+            max-height: 150px;
+        }
+        
+        /* Specific padding for banners inside content */
+        .page-content .banner-ad,
+        .details-content .banner-ad {
+            padding: 0;
+            margin-left: 0;
+            margin-right: 0;
+        }
+        
+        /* Ensure banner images in content areas are constrained */
+        .page-content .banner-ad img,
+        .details-content .banner-ad img {
+            width: 100%;
+        }
+
+
+        .ad-label {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            text-align: center;
+            padding: 5px;
+            background: rgba(0,0,0,0.2);
+        }
+
+        /* Sections */
+        .section {
+            margin: 30px 0;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 0 20px;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .see-all {
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        /* Movie Grid */
+        .movies-grid {
+            display: grid;
+            /* Use minmax to make it responsive, start larger */
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 15px;
+            padding: 0 20px;
+        }
+
+        .movie-card {
+            background-color: var(--bg-card);
+            border-radius: 10px;
+            overflow: hidden;
+            transition: transform 0.3s;
+            cursor: pointer;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .movie-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .movie-poster {
+            width: 100%;
+            /* NEW: Use aspect-ratio for 1:1 square */
+            aspect-ratio: 1 / 1;
+            /* NEW: Ensure image covers the area */
+            object-fit: cover;
+            /* REMOVED: height: 200px; */
+        }
+
+        .movie-info {
+            padding: 10px;
+            flex-grow: 1; /* Allows title to push category down */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            /* NEW: Set min-height for 2 lines of text + category */
+            min-height: 70px; 
+        }
+
+        .movie-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            
+            /* NEW: 2-line clamp */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            line-height: 1.3; /* Adjust line-height */
+            /* Removed: white-space: nowrap; */
+        }
+
+        .movie-category {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: auto; /* Pushes to bottom */
+        }
+
+        .movie-rating {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(0,0,0,0.7);
+            color: white;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+        
+        /* Category Card specific style */
+        .category-card {
+            background: linear-gradient(135deg, var(--accent) 0%, #8b0000 100%);
+            aspect-ratio: 1 / 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        
+        .category-card .category-icon {
+            font-size: 3rem;
+        }
+        
+        .category-card .movie-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            -webkit-line-clamp: 1; /* Category titles on one line */
+        }
+
+
+        /* Movie Details (Video Page) */
+        #movieDetails {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-dark);
+            z-index: 200;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .details-header {
+            position: relative;
+            width: 100%;
+            /* Height will be set by content */
+        }
+        
+        /* NEW: Inline player container */
+        #detailsPlayerContainer {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background-color: #000;
+            display: none; /* Hidden by default */
+        }
+        
+        #detailsPlayerContainer video,
+        #detailsPlayerContainer iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .details-backdrop {
+            width: 100%;
+            height: 300px; /* Original height */
+            object-fit: cover;
+            display: block; /* Shown by default */
+        }
+
+        .details-back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.5);
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .details-content {
+            padding: 20px;
+        }
+
+        .details-title {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        .details-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 15px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .details-description {
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+
+        .details-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .play-btn {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1rem;
+        }
+
+        .share-btn {
+            background-color: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 12px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Ad Overlay */
+        .ad-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 300;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .ad-content {
+            background: var(--bg-card);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            max-width: 400px;
+            margin: 20px;
+        }
+
+        .ad-timer {
+            font-size: 2rem;
+            color: var(--accent);
+            margin: 20px 0;
+        }
+
+        /* Movie Player (Fullscreen - now fallback) */
+        #moviePlayer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: black;
+            z-index: 400;
+            display: none;
+        }
+
+        .player-header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            z-index: 10;
+        }
+
+        .player-back-btn {
+            background: rgba(0,0,0,0.5);
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .player-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .player-container video, .player-container iframe {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: var(--bg-card);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            z-index: 100;
+            border-top: 1px solid var(--border);
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            flex: 1; /* Equal width */
+        }
+
+        .nav-item.active {
+            color: var(--accent);
+        }
+
+        .nav-icon {
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .movies-grid {
+                /* Adjust minmax for smaller screens */
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            }
+            
+            .promo-slider {
+                height: 150px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .movies-grid {
+                /* 2-column on mobile */
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+            
+            .header {
+                padding: 10px 15px;
+            }
+            
+            .search-bar {
+                margin: 0 10px;
+            }
+            
+            .details-backdrop {
+                height: 220px;
+            }
+        }
+        
+        @media (max-width: 360px) {
+             .movies-grid {
+                /* Fallback for very small screens */
+                grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            }
+        }
+
+        /* Page Content */
+        .page-content {
+            display: none;
+        }
+
+        .page-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Firebase Configuration -->
+    <script>
+        const firebaseConfig = {
+            // Your Firebase config
+            apiKey: "AIzaSyAjbYeUVd3U8ZSMLNvpwAncWD-BJ5DCqEQ",
+            authDomain: "vidsporn.firebaseapp.com",
+            projectId: "vidsporn",
+            storageBucket: "vidsporn.firebasestorage.app",
+            messagingSenderId: "644849366539",
+            appId: "1:644849366539:web:dcf2870c4d35ff2c10f90e",
+            measurementId: "G-W6764H1JXC"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+    </script>
+
+    <!-- Splash Screen -->
+    <div id="splashScreen">
+        <div class="splash-logo">vids-porn</div>
+        <div class="splash-tagline">Unlimited Adult Entertainment</div>
+        
+        <div class="age-warning">
+            <strong>⚠️ 18+ ADULTS ONLY</strong>
+            <p>You must be 18 years or older to access this content</p>
+        </div>
+
+        <div id="adContainer" class="ad-content">
+            <h3>Special Offer</h3>
+            <p>Premium content available</p>
+            <div class="ad-timer" id="adTimer">5</div>
+            <p>Video will play after ad</p>
+        </div>
+
+        <div class="splash-countdown">
+            Starting in <span id="countdown">5</span> seconds
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainApp" style="display: none;">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">vids-porn</div>
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="Search videos...">
+            </div>
+            <div class="header-actions">
+                <button class="header-btn" id="themeToggle">🌙</button>
+            </div>
+        </div>
+
+        <!-- Home Page -->
+        <div class="page-content active" id="homePage">
+            <!-- Promotion Slider -->
+            <div class="promo-slider" id="promoSlider">
+                <!-- Slides will be loaded here -->
+            </div>
+
+            <!-- Banner Ad 1 -->
+            <div class="banner-ad medium" id="bannerAd1">
+                <div class="ad-label">ADVERTISEMENT</div>
+                <img src="https://via.placeholder.com/728x90/333333/ffffff?text=Banner+Ad+1" alt="Advertisement">
+            </div>
+
+            <!-- Trending Now -->
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">Trending Now</h2>
+                    <a href="#" class="see-all" onclick="switchPage('searchPage'); return false;">See All</a>
+                </div>
+                <div class="movies-grid" id="trendingMovies">
+                    <!-- Trending movies will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Banner Ad 2 -->
+            <div class="banner-ad small" id="bannerAd2">
+                <div class="ad-label">ADVERTISEMENT</div>
+                <img src="https://via.placeholder.com/320x50/333333/ffffff?text=Banner+Ad+2" alt="Advertisement">
+            </div>
+
+            <!-- New Releases -->
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">New Releases</h2>
+                    <a href="#" class="see-all" onclick="switchPage('searchPage'); return false;">See All</a>
+                </div>
+                <div class="movies-grid" id="newReleases">
+                    <!-- New releases will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Banner Ad 3 -->
+            <div class="banner-ad large" id="bannerAd3">
+                <div class="ad-label">ADVERTISEMENT</div>
+                <img src="https://via.placeholder.com/970x250/333333/ffffff?text=Banner+Ad+3" alt="Advertisement">
+            </div>
+
+            <!-- Categories -->
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">Categories</h2>
+                    <a href="#" class="see-all" onclick="switchPage('categoriesPage'); return false;">See All</a>
+                </div>
+                <div class="movies-grid" id="categoriesGrid">
+                    <!-- Categories will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Page -->
+        <div class="page-content" id="searchPage">
+            <div style="padding: 20px;">
+                <h2 class="section-title" style="margin-bottom: 20px;">Search Results</h2>
+                
+                <!-- Banner Ad 4 -->
+                <div class="banner-ad medium" id="bannerAd4">
+                    <div class="ad-label">ADVERTISEMENT</div>
+                    <img src="https://via.placeholder.com/728x90/333333/ffffff?text=Banner+Ad+4" alt="Advertisement">
+                </div>
+                
+                <div class="movies-grid" id="searchResults">
+                    <!-- Search results will be loaded here -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- NEW: Categories Page -->
+        <div class="page-content" id="categoriesPage">
+            <div style="padding: 20px;">
+                <h2 class="section-title" style="margin-bottom: 20px;">All Categories</h2>
+                
+                <!-- Banner Ad (new) -->
+                <div class="banner-ad medium" id="bannerAdCategories">
+                    <div class="ad-label">ADVERTISEMENT</div>
+                    <img src="https://via.placeholder.com/728x90/333333/ffffff?text=Banner+Ad+Categories" alt="Advertisement">
+                </div>
+                
+                <div class="movies-grid" id="allCategoriesGrid">
+                    <!-- All categories will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Profile Page -->
+        <div class="page-content" id="profilePage">
+            <div style="padding: 20px;">
+                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
+                    <div style="width: 60px; height: 60px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem;">G</div>
+                    <div>
+                        <h2>Guest User</h2>
+                        <p style="color: var(--text-secondary);">Free Account</p>
+                    </div>
+                </div>
+
+                <!-- Banner Ad 5 -->
+                <div class="banner-ad small" id="bannerAd5">
+                    <div class="ad-label">ADVERTISEMENT</div>
+                    <img src="https://via.placeholder.com/320x50/333333/ffffff?text=Banner+Ad+5" alt="Advertisement">
+                </div>
+
+                <div style="margin-bottom: 30px;">
+                    <h3 style="margin-bottom: 15px;">Watched History</h3>
+                    <div class="movies-grid" id="watchedHistory">
+                        <!-- Watched movies will be loaded here -->
+                    </div>
+                </div>
+
+                <div>
+                    <h3 style="margin-bottom: 15px;">App Actions</h3>
+                    <div style="display: grid; gap: 10px;">
+                        <button class="play-btn" style="justify-content: center;" onclick="showAlert('vids-porn v1.0 - Adult Entertainment Platform')">About App</button>
+                        <button class="share-btn" style="justify-content: center;" onclick="showAlert('Redirecting to app store...')">Rate Us</button>
+                        <button class="share-btn" style="justify-content: center;" onclick="showAlert('Contact support@vidsporn.com')">Support</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Movie Details -->
+        <div id="movieDetails">
+            <div class="details-header">
+                <button class="details-back-btn" id="detailsBackBtn">←</button>
+                <!-- NEW: Inline Player -->
+                <div id="detailsPlayerContainer"></div>
+                <!-- Original Backdrop, will be hidden on play -->
+                <img id="detailsBackdrop" class="details-backdrop" src="" alt="">
+            </div>
+            <div class="details-content">
+                <h1 class="details-title" id="detailsTitle">Movie Title</h1>
+                <div class="details-meta">
+                    <span id="detailsCategory">Action</span>
+                    <span id="detailsLanguage">English</span>
+                    <span id="detailsViews">0 views</span>
+                </div>
+                
+                <div class="details-actions">
+                    <button class="play-btn" id="playMovieBtn">
+                        <span>▶</span> Watch Now
+                    </button>
+                    <button class="share-btn" id="shareMovieBtn">
+                        <span>↗</span> Share
+                    </button>
+                </div>
+                
+                <!-- Banner Ad 6 -->
+                <div class="banner-ad medium" id="bannerAd6">
+                    <div class="ad-label">ADVERTISEMENT</div>
+                    <img src="https://via.placeholder.com/728x90/333333/ffffff?text=Banner+Ad+6" alt="Advertisement">
+                </div>
+                
+                <p class="details-description" id="detailsDescription">Movie description goes here...</p>
+            </div>
+        </div>
+
+        <!-- Ad Overlay -->
+        <div class="ad-overlay" id="adOverlay">
+            <div class="ad-content">
+                <h3>Advertisement</h3>
+                <p>Video will play in</p>
+                <div class="ad-timer" id="adPlayTimer">5</div>
+                <p>Please wait...</p>
+            </div>
+        </div>
+
+        <!-- Movie Player (Fullscreen - no longer used for main playback) -->
+        <div id="moviePlayer">
+            <div class="player-header">
+                <button class="player-back-btn" id="playerBackBtn">←</button>
+            </div>
+            <div class="player-container" id="playerContainer">
+                <!-- Video player will be loaded here -->
+            </div>
+            
+            <!-- Banner Ad 7 -->
+            <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;">
+                <div class="banner-ad small" id="bannerAd7">
+                    <div class="ad-label">ADVERTISEMENT</div>
+                    <img src="https://via.placeholder.com/320x50/333333/ffffff?text=Banner+Ad+7" alt="Advertisement">
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <div class="bottom-nav">
+            <a href="#" class="nav-item active" data-page="homePage">
+                <div class="nav-icon">🏠</div>
+                <div>Home</div>
+            </a>
+            <a href="#" class="nav-item" data-page="searchPage">
+                <div class="nav-icon">🔍</div>
+                <div>Search</div>
+            </a>
+            <!-- NEW: Categories Nav Item -->
+            <a href="#" class="nav-item" data-page="categoriesPage">
+                <div class="nav-icon">🗂️</div>
+                <div>Categories</div>
+            </a>
+            <a href="#" class="nav-item" data-page="profilePage">
+                <div class="nav-icon">👤</div>
+                <div>Profile</div>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // App State
+        let movies = {};
+        let promotions = {};
+        let watchedHistory = JSON.parse(localStorage.getItem('watchedHistory')) || [];
+        let currentMovie = null;
+
+        // DOM Elements
+        const splashScreen = document.getElementById('splashScreen');
+        const mainApp = document.getElementById('mainApp');
+        const countdownElement = document.getElementById('countdown');
+        const adTimer = document.getElementById('adTimer');
+
+        // Initialize App
+        function initApp() {
+            setupEventListeners();
+            loadDataFromFirebase();
+            startSplashCountdown();
+            // checkUrlParameters() is now called after firebase load
+        }
+
+        // Check URL parameters for direct video playback
+        function checkUrlParameters() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const movieId = urlParams.get('movie');
+            
+            if (movieId && movies[movieId]) {
+                showMovieDetails(movies[movieId]);
+                setTimeout(() => {
+                    // Directly play inline
+                    playVideoWithAd(); 
+                }, 500); // Short delay
+            }
+        }
+
+        // Splash Screen Countdown
+        function startSplashCountdown() {
+            let countdown = 5;
+            const countdownInterval = setInterval(() => {
+                countdownElement.textContent = countdown;
+                adTimer.textContent = countdown;
+                countdown--;
+                
+                if (countdown < 0) {
+                    clearInterval(countdownInterval);
+                    splashScreen.style.display = 'none';
+                    mainApp.style.display = 'block';
+                }
+            }, 1000);
+        }
+
+        // Firebase Data Loading
+        function loadDataFromFirebase() {
+            // Load movies
+            db.ref('movies').on('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    movies = snapshot.val();
+                    console.log("Movies loaded:", movies);
+                    displayMovies();
+                    displayCategoriesHomePage();
+                    displayAllCategoriesPage(); // NEW
+                    
+                    // NEW: Check URL params *after* movies are loaded
+                    checkUrlParameters(); 
+                } else {
+                    console.log("No movies found in database");
+                    movies = {};
+                    displayMovies();
+                }
+            });
+
+            // Load promotions
+            db.ref('promotions').on('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    promotions = snapshot.val();
+                    console.log("Promotions loaded:", promotions);
+                    setupPromoSlider();
+                } else {
+                    console.log("No promotions found in database");
+                    promotions = {};
+                    setupPromoSlider();
+                }
+            });
+        }
+
+        // Promotion Slider
+        function setupPromoSlider() {
+            const slider = document.getElementById('promoSlider');
+            const activePromotions = Object.values(promotions).filter(promo => promo.status);
+            
+            if (activePromotions.length === 0) {
+                slider.innerHTML = '<div class="slide active"><img src="https://via.placeholder.com/800x400/333333/ffffff?text=Welcome+to+vids-porn" alt="Welcome"></div>';
+                return;
+            }
+
+            slider.innerHTML = '';
+            activePromotions.forEach((promo, index) => {
+                const slide = document.createElement('div');
+                slide.className = `slide ${index === 0 ? 'active' : ''}`;
+                slide.innerHTML = `
+                    <a href="${promo.link || '#'}" target="_blank">
+                        <img src="${promo.image || 'https://via.placeholder.com/800x400/333333/ffffff?text=Promotion'}" alt="Promotion">
+                    </a>
+                `;
+                slider.appendChild(slide);
+            });
+
+            // Add dots
+            const dotsContainer = document.createElement('div');
+            dotsContainer.className = 'slider-dots';
+            activePromotions.forEach((_, index) => {
+                const dot = document.createElement('div');
+                dot.className = `dot ${index === 0 ? 'active' : ''}`;
+                dot.addEventListener('click', () => goToSlide(index));
+                dotsContainer.appendChild(dot);
+            });
+            slider.appendChild(dotsContainer);
+
+            // Auto slide
+            let currentSlide = 0;
+            setInterval(() => {
+                currentSlide = (currentSlide + 1) % activePromotions.length;
+                goToSlide(currentSlide);
+            }, 5000);
+        }
+
+        function goToSlide(index) {
+            const slides = document.querySelectorAll('#promoSlider .slide');
+            const dots = document.querySelectorAll('#promoSlider .dot');
+            
+            slides.forEach(slide => slide.classList.remove('active'));
+            dots.forEach(dot => dot.classList.remove('active'));
+            
+            if (slides[index] && dots[index]) {
+                slides[index].classList.add('active');
+                dots[index].classList.add('active');
+            }
+        }
+
+        // Display Movies
+        function displayMovies() {
+            const movieArray = Object.values(movies);
+            
+            // Trending (most viewed)
+            const trending = movieArray
+                .sort((a, b) => (b.views || 0) - (a.views || 0))
+                .slice(0, 6);
+            
+            // New Releases (latest)
+            const newReleases = movieArray
+                .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+                .slice(0, 6);
+
+            displayMovieGrid('trendingMovies', trending);
+            displayMovieGrid('newReleases', newReleases);
+            updateWatchedHistory();
+        }
+
+        function displayMovieGrid(containerId, movieList) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+
+            if (movieList.length === 0) {
+                container.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: var(--text-secondary);">No movies available</div>';
+                return;
+            }
+
+            movieList.forEach(movie => {
+                const card = document.createElement('div');
+                card.className = 'movie-card';
+                card.innerHTML = `
+                    <img src="${movie.poster || getDefaultThumbnail(movie.category)}" 
+                         alt="${movie.title}" class="movie-poster"
+                         onerror="this.src='https://via.placeholder.com/300x300/333333/ffffff?text=No+Image'">
+                    ${movie.rating ? `<div class="movie-rating">⭐ ${movie.rating}</div>` : ''}
+                    <div class="movie-info">
+                        <div class="movie-title">${movie.title}</div>
+                        <div class="movie-category">${movie.category}</div>
+                    </div>
+                `;
+                card.addEventListener('click', () => {
+                    // Generate shareable URL and navigate to video
+                    const shareUrl = `${window.location.origin}${window.location.pathname}?movie=${movie.id}`;
+                    window.history.pushState({movieId: movie.id}, '', shareUrl);
+                    showMovieDetails(movie);
+                });
+                container.appendChild(card);
+            });
+        }
+
+        // Get default thumbnail based on category
+        function getDefaultThumbnail(category) {
+            const thumbnails = {
+                'Lesbian': 'https://via.placeholder.com/300x300/8B008B/ffffff?text=Lesbian',
+                'Anal': 'https://via.placeholder.com/300x300/FF4500/ffffff?text=Anal',
+                'Blowjob': 'https://via.placeholder.com/300x300/FF69B4/ffffff?text=Blowjob',
+                'Hardcore': 'https://via.placeholder.com/300x300/DC143C/ffffff?text=Hardcore',
+                'Teen': 'https://via.placeholder.com/300x300/00CED1/ffffff?text=Teen',
+                'MILF': 'https://via.placeholder.com/300x300/FF8C00/ffffff?text=MILF',
+                'Threesome': 'https://via.placeholder.com/300x300/9932CC/ffffff?text=Threesome',
+                'Public': 'https://via.placeholder.com/300x300/32CD32/ffffff?text=Public'
+            };
+            
+            return thumbnails[category] || 'https://via.placeholder.com/300x300/333333/ffffff?text=Adult+Video';
+        }
+
+        function displayCategoriesHomePage() {
+            const categories = [...new Set(Object.values(movies).map(movie => movie.category))];
+            const container = document.getElementById('categoriesGrid');
+            container.innerHTML = '';
+
+            categories.slice(0, 6).forEach(category => {
+                const card = createCategoryCard(category);
+                container.appendChild(card);
+            });
+        }
+        
+        // NEW: Display all categories
+        function displayAllCategoriesPage() {
+            const categories = [...new Set(Object.values(movies).map(movie => movie.category))];
+            const container = document.getElementById('allCategoriesGrid');
+            container.innerHTML = '';
+
+            categories.forEach(category => {
+                const card = createCategoryCard(category);
+                container.appendChild(card);
+            });
+        }
+        
+        // NEW: Helper function to create a category card
+        function createCategoryCard(category) {
+            const card = document.createElement('div');
+            card.className = 'movie-card category-card'; // Re-use movie-card structure
+            card.innerHTML = `
+                <div class="category-icon">🎬</div>
+                <div class="movie-info">
+                    <div class="movie-title">${category}</div>
+                </div>
+            `;
+            card.addEventListener('click', () => filterByCategory(category));
+            return card;
+        }
+
+
+        // Movie Details
+        function showMovieDetails(movie) {
+            currentMovie = movie;
+            
+            document.getElementById('detailsTitle').textContent = movie.title;
+            document.getElementById('detailsCategory').textContent = movie.category;
+            document.getElementById('detailsLanguage').textContent = movie.language;
+            document.getElementById('detailsViews').textContent = `${movie.views || 0} views`;
+            document.getElementById('detailsDescription').textContent = movie.description || 'No description available.';
+            
+            // Set backdrop image with fallback
+            const backdrop = document.getElementById('detailsBackdrop');
+            backdrop.src = movie.poster || getDefaultThumbnail(movie.category);
+            backdrop.onerror = function() {
+                this.src = 'https://via.placeholder.com/800x450/333333/ffffff?text=No+Image';
+            };
+            
+            // NEW: Reset view to show backdrop, hide player
+            backdrop.style.display = 'block';
+            document.getElementById('detailsPlayerContainer').style.display = 'none';
+            document.getElementById('detailsPlayerContainer').innerHTML = '';
+            
+            document.getElementById('movieDetails').style.display = 'block';
+            document.getElementById('movieDetails').scrollTop = 0; // Scroll to top
+        }
+
+        function playVideoWithAd() {
+            if (!currentMovie) return;
+            
+            // Show ad overlay
+            const adOverlay = document.getElementById('adOverlay');
+            let adCountdown = 5;
+            adOverlay.style.display = 'flex';
+            document.getElementById('adPlayTimer').textContent = adCountdown;
+            
+            const adInterval = setInterval(() => {
+                adCountdown--;
+                document.getElementById('adPlayTimer').textContent = adCountdown;
+                
+                if (adCountdown <= 0) {
+                    clearInterval(adInterval);
+                    adOverlay.style.display = 'none';
+                    
+                    // NEW: Play video inline
+                    playVideoInline(currentMovie.video);
+                    
+                    // Add to watched history
+                    if (!watchedHistory.find(m => m.id === currentMovie.id)) {
+                        watchedHistory.push(currentMovie);
+                        localStorage.setItem('watchedHistory', JSON.stringify(watchedHistory));
+                        updateWatchedHistory();
+                    }
+                }
+            }, 1000);
+        }
+
+        // NEW: Play video inside the details page
+        function playVideoInline(url) {
+            const playerContainer = document.getElementById('detailsPlayerContainer');
+            
+            if (url.endsWith('.mp4') || url.includes('.m3u8')) {
+                playerContainer.innerHTML = `
+                    <video controls autoplay style="width: 100%; height: 100%;">
+                        <source src="${url}" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                `;
+            } else {
+                playerContainer.innerHTML = `
+                    <iframe src="${url}" frameborder="0" allowfullscreen style="width: 100%; height: 100%;"></iframe>
+                `;
+            }
+            
+            // Show player, hide backdrop
+            playerContainer.style.display = 'block';
+            document.getElementById('detailsBackdrop').style.display = 'none';
+            
+            // Scroll to top to show player
+            document.getElementById('movieDetails').scrollTop = 0;
+        }
+
+        function shareMovie() {
+            if (!currentMovie) return;
+            
+            const url = window.location.origin + window.location.pathname;
+            const shareUrl = `${url}?movie=${currentMovie.id}`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: currentMovie.title,
+                    text: currentMovie.description,
+                    url: shareUrl
+                });
+            } else {
+                navigator.clipboard.writeText(shareUrl);
+                showAlert('Link copied to clipboard!');
+            }
+        }
+
+        // Search and Filter
+        function setupSearch() {
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase();
+                if (query.length > 0) { // Search immediately
+                    const results = Object.values(movies).filter(movie =>
+                        movie.title.toLowerCase().includes(query) ||
+                        movie.category.toLowerCase().includes(query) ||
+                        movie.tags?.toLowerCase().includes(query)
+                    );
+                    displaySearchResults(results);
+                    switchPage('searchPage');
+                } else {
+                    // Clear results if query is empty
+                    displaySearchResults([]);
+                }
+            });
+        }
+
+        function displaySearchResults(results) {
+            const container = document.getElementById('searchResults');
+            displayMovieGrid('searchResults', results);
+        }
+
+        function filterByCategory(category) {
+            const results = Object.values(movies).filter(movie =>
+                movie.category === category
+            );
+            displaySearchResults(results);
+            document.getElementById('searchInput').value = category; // Pre-fill search
+            switchPage('searchPage');
+        }
+
+        function updateWatchedHistory() {
+            const container = document.getElementById('watchedHistory');
+            displayMovieGrid('watchedHistory', watchedHistory.slice(-6).reverse());
+        }
+
+        // Navigation
+        function switchPage(pageId) {
+            document.querySelectorAll('.page-content').forEach(page => {
+                page.classList.remove('active');
+            });
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            const page = document.getElementById(pageId);
+            const navItem = document.querySelector(`[data-page="${pageId}"]`);
+            
+            if (page) page.classList.add('active');
+            if (navItem) navItem.classList.add('active');
+            
+            // Clear search results when leaving search page
+            if (pageId !== 'searchPage') {
+                document.getElementById('searchInput').value = '';
+                displaySearchResults([]);
+            }
+        }
+
+        // Utility Functions
+        function setupEventListeners() {
+            // Navigation
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    switchPage(item.getAttribute('data-page'));
+                });
+            });
+
+            // Movie actions
+            document.getElementById('playMovieBtn').addEventListener('click', playVideoWithAd);
+            document.getElementById('shareMovieBtn').addEventListener('click', shareMovie);
+            
+            // Back buttons
+            document.getElementById('detailsBackBtn').addEventListener('click', () => {
+                document.getElementById('movieDetails').style.display = 'none';
+                // Clear inline player
+                document.getElementById('detailsPlayerContainer').innerHTML = '';
+                // Clear URL parameter when going back
+                window.history.pushState({}, '', window.location.pathname);
+            });
+            
+            // Fallback for fullscreen player
+            document.getElementById('playerBackBtn').addEventListener('click', () => {
+                document.getElementById('moviePlayer').style.display = 'none';
+                document.getElementById('playerContainer').innerHTML = '';
+            });
+
+            // Search
+            setupSearch();
+
+            // Theme toggle
+            document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+        }
+
+        function toggleTheme() {
+            const isDark = document.body.classList.toggle('light-theme');
+            document.getElementById('themeToggle').textContent = isDark ? '☀️' : '🌙';
+            localStorage.setItem('theme', isDark ? 'light' : 'dark');
+        }
+
+        function showAlert(message) {
+            // In a real app, replace this with a custom modal/toast
+            const alertBox = document.createElement('div');
+            alertBox.style.cssText = `
+                position: fixed;
+                bottom: 70px; /* Above nav */
+                left: 50%;
+                transform: translateX(-50%);
+                background: var(--bg-card);
+                color: var(--text);
+                padding: 10px 20px;
+                border-radius: 20px;
+                box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+                z-index: 1001;
+                font-size: 0.9rem;
+            `;
+            alertBox.textContent = message;
+            document.body.appendChild(alertBox);
+            setTimeout(() => {
+                alertBox.remove();
+            }, 2500);
+        }
+
+        // Load saved theme
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'light') {
+            document.body.classList.add('light-theme');
+            document.getElementById('themeToggle').textContent = '☀️';
+        }
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
