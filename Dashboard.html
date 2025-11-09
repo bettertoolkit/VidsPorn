@@ -1,0 +1,1297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>vids-control Admin</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    
+    <style>
+        :root {
+            --bg-dark: #121212;
+            --bg-card: #1e1e1e;
+            --accent: #e50914;
+            --text: #ffffff;
+            --text-secondary: #b3b3b3;
+            --border: #333333;
+            --success: #4CAF50;
+            --warning: #FF9800;
+        }
+
+        .light-theme {
+            --bg-dark: #f5f5f5;
+            --bg-card: #ffffff;
+            --accent: #e50914;
+            --text: #121212;
+            --text-secondary: #666666;
+            --border: #dddddd;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background-color: var(--bg-card);
+            padding: 20px 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            transition: transform 0.3s;
+            z-index: 100;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+
+        .logo {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        .logo h1 {
+            font-size: 1.5rem;
+            color: var(--accent);
+        }
+
+        .nav-links {
+            list-style: none;
+        }
+
+        .nav-links li {
+            padding: 10px 20px;
+            margin: 5px 0;
+        }
+
+        .nav-links li a {
+            color: var(--text);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .nav-links li a:hover, .nav-links li a.active {
+            background-color: rgba(229, 9, 20, 0.1);
+            color: var(--accent);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 250px;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* Login Form */
+        .login-container {
+            max-width: 400px;
+            margin: 100px auto;
+            padding: 30px;
+            background: var(--bg-card);
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .login-title {
+            text-align: center;
+            margin-bottom: 30px;
+            color: var(--accent);
+        }
+
+        /* Cards */
+        .card {
+            background-color: var(--bg-card);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .btn {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #b80710;
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        .btn-secondary:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+
+        /* Dashboard Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background-color: var(--bg-card);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 10px 0;
+            color: var(--accent);
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid var(--border);
+            background-color: var(--bg-dark);
+            color: var(--text);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        /* Tables */
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th, .table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .table th {
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-size: 1rem;
+            transition: color 0.3s;
+        }
+
+        .action-btn.edit:hover {
+            color: var(--success);
+        }
+
+        .action-btn.delete:hover {
+            color: var(--accent);
+        }
+
+        /* Modals */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: var(--bg-card);
+            border-radius: 10px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text);
+            cursor: pointer;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border);
+        }
+
+        /* Preview */
+        .preview-container {
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 5px;
+            border: 1px solid var(--border);
+        }
+
+        /* Video Preview */
+        .video-preview {
+            width: 100%;
+            max-height: 200px;
+            border-radius: 5px;
+            border: 1px solid var(--border);
+            background: #000;
+        }
+
+        /* Alerts */
+        .alert {
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+
+        .alert-success {
+            background-color: rgba(76, 175, 80, 0.2);
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+
+        .alert-error {
+            background-color: rgba(229, 9, 20, 0.2);
+            color: var(--accent);
+            border: 1px solid var(--accent);
+        }
+
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: var(--accent);
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+
+        /* Age Verification */
+        .age-verification {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(229, 9, 20, 0.1);
+            border-radius: 5px;
+            border: 1px solid var(--accent);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .menu-toggle {
+                display: block;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            .table {
+                font-size: 0.9rem;
+            }
+            .table th, .table td {
+                padding: 8px 10px;
+            }
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* User Info */
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            border-top: 1px solid var(--border);
+            margin-top: 20px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <!-- Firebase Configuration -->
+    <script>
+        // IMPORTANT: Replace with your actual Firebase configuration
+        const firebaseConfig = {
+  apiKey: "AIzaSyAjbYeUVd3U8ZSMLNvpwAncWD-BJ5DCqEQ",
+  authDomain: "vidsporn.firebaseapp.com",
+  projectId: "vidsporn",
+  storageBucket: "vidsporn.firebasestorage.app",
+  messagingSenderId: "644849366539",
+  appId: "1:644849366539:web:dcf2870c4d35ff2c10f90e",
+  measurementId: "G-W6764H1JXC"
+};
+        
+        try {
+            firebase.initializeApp(firebaseConfig);
+            console.log("Firebase initialized successfully");
+        } catch (error) {
+            console.error("Firebase initialization error:", error);
+        }
+        
+        const db = firebase.database();
+    </script>
+
+    <div class="container">
+        <!-- Login Screen -->
+        <div id="loginScreen" class="login-container">
+            <h2 class="login-title">vids-control Admin</h2>
+            <div class="age-verification">
+                <p>⚠️ You must be 18+ years old to access this content</p>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="ageVerify">
+                    <span class="toggle-slider"></span>
+                </label>
+                <span>I confirm I am 18+ years old</span>
+            </div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" id="adminName" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" id="adminEmail" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" id="adminPassword" class="form-control" required>
+                </div>
+                <button type="submit" class="btn" style="width: 100%;">Login to Admin Panel</button>
+            </form>
+        </div>
+
+        <!-- Admin Panel (Initially Hidden) -->
+        <div id="adminPanel" style="display: none;">
+            <!-- Sidebar -->
+            <div class="sidebar" id="sidebar">
+                <div class="logo">
+                    <h1>vids-control</h1>
+                    <p>Admin Panel</p>
+                </div>
+                <ul class="nav-links">
+                    <li><a href="#" class="active" data-tab="dashboard">📊 Dashboard</a></li>
+                    <li><a href="#" data-tab="movies">🎬 Movies</a></li>
+                    <li><a href="#" data-tab="promotions">📢 Promotions</a></li>
+                    <li><a href="#" data-tab="settings">⚙️ Settings</a></li>
+                </ul>
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">A</div>
+                    <div>
+                        <div id="userName">Admin</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);" id="userEmail">admin@vidsporn.com</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="main-content">
+                <div class="header">
+                    <button class="menu-toggle" id="menuToggle">☰</button>
+                    <h2 id="pageTitle">Dashboard</h2>
+                    <button class="theme-toggle" id="themeToggle">
+                        <span id="themeIcon">🌙</span> <span id="themeText">Dark</span>
+                    </button>
+                </div>
+
+                <!-- Dashboard Tab -->
+                <div class="tab-content active" id="dashboard">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Total Movies</div>
+                            <div class="stat-value" id="totalMovies">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Total Promotions</div>
+                            <div class="stat-value" id="totalPromotions">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Categories</div>
+                            <div class="stat-value" id="totalCategories">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Last Updated</div>
+                            <div class="stat-value" id="lastUpdated">-</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="card-title">Quick Actions</h3>
+                        <div style="display: flex; gap: 10px; margin-top: 15px;">
+                            <button class="btn" onclick="switchTab('movies')">Add New Movie</button>
+                            <button class="btn" onclick="switchTab('promotions')">Manage Promotions</button>
+                            <button class="btn btn-secondary" onclick="exportData()">Export Data</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Movies Tab -->
+                <div class="tab-content" id="movies">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Movies Manager</h3>
+                            <button class="btn" id="addMovieBtn">Add Movie</button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Title</th>
+                                        <th>Category</th>
+                                        <th>Language</th>
+                                        <th>Views</th>
+                                        <th>Likes</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="moviesTableBody">
+                                    <!-- Movies will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Promotions Tab -->
+                <div class="tab-content" id="promotions">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Promotions Manager</h3>
+                            <button class="btn" id="addPromotionBtn">Add Promotion</button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Image</th>
+                                        <th>Link</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="promotionsTableBody">
+                                    <!-- Promotions will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings Tab -->
+                <div class="tab-content" id="settings">
+                    <div class="card">
+                        <h3 class="card-title">App Settings</h3>
+                        <div class="form-group">
+                            <label class="form-label">Export Database</label>
+                            <button class="btn" id="exportBtn">Export as JSON</button>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Import Database</label>
+                            <input type="file" id="importFile" class="form-control" accept=".json">
+                            <button class="btn" id="importBtn">Import JSON</button>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Reset Local Storage</label>
+                            <button class="btn btn-secondary" id="resetBtn">Reset</button>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Logout</label>
+                            <button class="btn btn-secondary" id="logoutBtn" style="background: var(--accent);">Logout</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Movie Modal -->
+    <div class="modal" id="movieModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="movieModalTitle">Add Movie</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <form id="movieForm">
+                <input type="hidden" id="movieId">
+                <div class="form-group">
+                    <label class="form-label">Title *</label>
+                    <input type="text" id="movieTitle" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea id="movieDescription" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Category *</label>
+                    <input type="text" id="movieCategory" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Language *</label>
+                    <input type="text" id="movieLanguage" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Tags (comma separated)</label>
+                    <input type="text" id="movieTags" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Poster URL</label>
+                    <input type="url" id="moviePoster" class="form-control">
+                    <div class="preview-container">
+                        <img id="posterPreview" class="preview-image" src="" style="display: none;">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Video URL *</label>
+                    <input type="url" id="movieVideo" class="form-control" required>
+                    <div class="preview-container">
+                        <video id="videoPreview" class="video-preview" controls style="display: none;">
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary close-modal">Cancel</button>
+                    <button type="submit" class="btn">Save Movie</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Promotion Modal -->
+    <div class="modal" id="promotionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="promotionModalTitle">Add Promotion</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <form id="promotionForm">
+                <input type="hidden" id="promotionId">
+                <div class="form-group">
+                    <label class="form-label">Image URL</label>
+                    <input type="url" id="promotionImage" class="form-control">
+                    <div class="preview-container">
+                        <img id="promotionPreview" class="preview-image" src="" style="display: none;">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Redirect Link</label>
+                    <input type="url" id="promotionLink" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="promotionStatus">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary close-modal">Cancel</button>
+                    <button type="submit" class="btn">Save Promotion</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // App State
+        let currentUser = null;
+        let movies = {};
+        let promotions = {};
+        let categories = new Set();
+
+        // DOM Elements
+        const loginScreen = document.getElementById('loginScreen');
+        const adminPanel = document.getElementById('adminPanel');
+        const loginForm = document.getElementById('loginForm');
+        const ageVerify = document.getElementById('ageVerify');
+        const userName = document.getElementById('userName');
+        const userEmail = document.getElementById('userEmail');
+        const userAvatar = document.getElementById('userAvatar');
+
+        // Initialize App
+        function initApp() {
+            setupEventListeners();
+            checkAuthState();
+        }
+
+        // Authentication
+        function checkAuthState() {
+            const savedUser = localStorage.getItem('adminUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                showAdminPanel();
+            }
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            
+            if (!ageVerify.checked) {
+                showAlert('You must confirm you are 18+ years old', 'error');
+                return;
+            }
+
+            const name = document.getElementById('adminName').value;
+            const email = document.getElementById('adminEmail').value;
+            
+            currentUser = {
+                name: name,
+                email: email,
+                loginTime: new Date().toISOString()
+            };
+
+            localStorage.setItem('adminUser', JSON.stringify(currentUser));
+            showAdminPanel();
+            showAlert('Login successful!', 'success');
+        }
+
+        function showAdminPanel() {
+            loginScreen.style.display = 'none';
+            adminPanel.style.display = 'block';
+            
+            // Update user info
+            userName.textContent = currentUser.name;
+            userEmail.textContent = currentUser.email;
+            userAvatar.textContent = currentUser.name.charAt(0).toUpperCase();
+            
+            loadDataFromFirebase();
+        }
+
+        function handleLogout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('adminUser');
+                currentUser = null;
+                adminPanel.style.display = 'none';
+                loginScreen.style.display = 'block';
+                loginForm.reset();
+            }
+        }
+
+        // Firebase Operations
+        function loadDataFromFirebase() {
+            // Load movies
+            db.ref('movies').on('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    movies = snapshot.val();
+                    console.log("Movies loaded:", movies);
+                    updateMoviesTable();
+                    updateDashboard();
+                } else {
+                    console.log("No movies found in database");
+                    movies = {};
+                    updateMoviesTable();
+                    updateDashboard();
+                }
+            }, (error) => {
+                console.error("Error loading movies:", error);
+                showAlert('Error loading movies: ' + error.message, 'error');
+            });
+
+            // Load promotions
+            db.ref('promotions').on('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    promotions = snapshot.val();
+                    console.log("Promotions loaded:", promotions);
+                    updatePromotionsTable();
+                    updateDashboard();
+                } else {
+                    console.log("No promotions found in database");
+                    promotions = {};
+                    updatePromotionsTable();
+                    updateDashboard();
+                }
+            }, (error) => {
+                console.error("Error loading promotions:", error);
+                showAlert('Error loading promotions: ' + error.message, 'error');
+            });
+        }
+
+        function saveMovie(movieData) {
+            const id = movieData.id || Date.now().toString();
+            const movieRef = db.ref('movies/' + id);
+            
+            const movieToSave = {
+                title: movieData.title,
+                description: movieData.description || '',
+                category: movieData.category,
+                language: movieData.language,
+                tags: movieData.tags || '',
+                poster: movieData.poster || '',
+                video: movieData.video,
+                views: movieData.views || 0,
+                likes: movieData.likes || 0,
+                rating: movieData.rating || 0,
+                createdAt: movieData.createdAt || new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+            
+            movieRef.set(movieToSave)
+                .then(() => {
+                    console.log("Movie saved successfully with ID:", id);
+                    showAlert('Movie saved successfully!', 'success');
+                })
+                .catch((error) => {
+                    console.error("Error saving movie:", error);
+                    showAlert('Error saving movie: ' + error.message, 'error');
+                });
+        }
+
+        function savePromotion(promotionData) {
+            const id = promotionData.id || Date.now().toString();
+            const promoRef = db.ref('promotions/' + id);
+            
+            const promoToSave = {
+                image: promotionData.image || '',
+                link: promotionData.link || '',
+                status: promotionData.status !== undefined ? promotionData.status : true,
+                createdAt: promotionData.createdAt || new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+            
+            promoRef.set(promoToSave)
+                .then(() => {
+                    console.log("Promotion saved successfully with ID:", id);
+                    showAlert('Promotion saved successfully!', 'success');
+                })
+                .catch((error) => {
+                    console.error("Error saving promotion:", error);
+                    showAlert('Error saving promotion: ' + error.message, 'error');
+                });
+        }
+
+        function deleteMovie(id) {
+            if (confirm('Are you sure you want to delete this movie?')) {
+                db.ref('movies/' + id).remove()
+                    .then(() => {
+                        console.log("Movie deleted successfully");
+                        showAlert('Movie deleted successfully', 'success');
+                    })
+                    .catch((error) => {
+                        console.error("Error deleting movie:", error);
+                        showAlert('Error deleting movie: ' + error.message, 'error');
+                    });
+            }
+        }
+
+        function deletePromotion(id) {
+            if (confirm('Are you sure you want to delete this promotion?')) {
+                db.ref('promotions/' + id).remove()
+                    .then(() => {
+                        console.log("Promotion deleted successfully");
+                        showAlert('Promotion deleted successfully', 'success');
+                    })
+                    .catch((error) => {
+                        console.error("Error deleting promotion:", error);
+                        showAlert('Error deleting promotion: ' + error.message, 'error');
+                    });
+            }
+        }
+
+        // UI Updates
+        function updateDashboard() {
+            document.getElementById('totalMovies').textContent = Object.keys(movies).length;
+            document.getElementById('totalPromotions').textContent = Object.keys(promotions).length;
+            
+            // Count categories
+            categories.clear();
+            Object.values(movies).forEach(movie => {
+                if (movie.category) categories.add(movie.category);
+            });
+            document.getElementById('totalCategories').textContent = categories.size;
+            
+            document.getElementById('lastUpdated').textContent = new Date().toLocaleTimeString();
+        }
+
+        function updateMoviesTable() {
+            const tbody = document.getElementById('moviesTableBody');
+            tbody.innerHTML = '';
+
+            if (Object.keys(movies).length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No movies found</td></tr>';
+                return;
+            }
+
+            Object.entries(movies).forEach(([id, movie]) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${movie.title || 'Untitled'}</td>
+                    <td>${movie.category || 'Uncategorized'}</td>
+                    <td>${movie.language || 'Unknown'}</td>
+                    <td>${movie.views || 0}</td>
+                    <td>${movie.likes || 0}</td>
+                    <td class="actions">
+                        <button class="action-btn edit" onclick="editMovie('${id}')">✏️</button>
+                        <button class="action-btn delete" onclick="deleteMovie('${id}')">🗑️</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function updatePromotionsTable() {
+            const tbody = document.getElementById('promotionsTableBody');
+            tbody.innerHTML = '';
+
+            if (Object.keys(promotions).length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No promotions found</td></tr>';
+                return;
+            }
+
+            Object.entries(promotions).forEach(([id, promo]) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        ${promo.image ? 
+                            `<img src="${promo.image}" alt="Promo" style="width: 50px; height: 30px; object-fit: cover; border-radius: 3px;">` : 
+                            'No Image'
+                        }
+                    </td>
+                    <td>${promo.link || 'No Link'}</td>
+                    <td>${promo.status ? 'Active' : 'Inactive'}</td>
+                    <td class="actions">
+                        <button class="action-btn edit" onclick="editPromotion('${id}')">✏️</button>
+                        <button class="action-btn delete" onclick="deletePromotion('${id}')">🗑️</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Modal Functions
+        function openMovieModal(movie = null) {
+            const modal = document.getElementById('movieModal');
+            const title = document.getElementById('movieModalTitle');
+            const form = document.getElementById('movieForm');
+            
+            title.textContent = movie ? 'Edit Movie' : 'Add Movie';
+            document.getElementById('movieId').value = movie ? movie.id : '';
+            document.getElementById('movieTitle').value = movie ? movie.title : '';
+            document.getElementById('movieDescription').value = movie ? movie.description : '';
+            document.getElementById('movieCategory').value = movie ? movie.category : '';
+            document.getElementById('movieLanguage').value = movie ? movie.language : '';
+            document.getElementById('movieTags').value = movie ? movie.tags : '';
+            document.getElementById('moviePoster').value = movie ? movie.poster : '';
+            document.getElementById('movieVideo').value = movie ? movie.video : '';
+            
+            // Update previews
+            updatePosterPreview(movie ? movie.poster : '');
+            updateVideoPreview(movie ? movie.video : '');
+            
+            modal.style.display = 'flex';
+        }
+
+        function editMovie(id) {
+            const movie = movies[id];
+            if (movie) {
+                movie.id = id;
+                openMovieModal(movie);
+            }
+        }
+
+        function openPromotionModal(promo = null) {
+            const modal = document.getElementById('promotionModal');
+            const title = document.getElementById('promotionModalTitle');
+            
+            title.textContent = promo ? 'Edit Promotion' : 'Add Promotion';
+            document.getElementById('promotionId').value = promo ? promo.id : '';
+            document.getElementById('promotionImage').value = promo ? promo.image : '';
+            document.getElementById('promotionLink').value = promo ? promo.link : '';
+            document.getElementById('promotionStatus').checked = promo ? promo.status : true;
+            
+            // Update preview
+            updatePromotionPreview(promo ? promo.image : '');
+            
+            modal.style.display = 'flex';
+        }
+
+        function editPromotion(id) {
+            const promo = promotions[id];
+            if (promo) {
+                promo.id = id;
+                openPromotionModal(promo);
+            }
+        }
+
+        // Preview Functions
+        function updatePosterPreview(url) {
+            const preview = document.getElementById('posterPreview');
+            if (url) {
+                preview.src = url;
+                preview.style.display = 'block';
+            } else {
+                preview.style.display = 'none';
+            }
+        }
+
+        function updateVideoPreview(url) {
+            const preview = document.getElementById('videoPreview');
+            if (url) {
+                preview.src = url;
+                preview.style.display = 'block';
+            } else {
+                preview.style.display = 'none';
+            }
+        }
+
+        function updatePromotionPreview(url) {
+            const preview = document.getElementById('promotionPreview');
+            if (url) {
+                preview.src = url;
+                preview.style.display = 'block';
+            } else {
+                preview.style.display = 'none';
+            }
+        }
+
+        // Form Handlers
+        function handleMovieSubmit(e) {
+            e.preventDefault();
+            
+            const movieData = {
+                id: document.getElementById('movieId').value,
+                title: document.getElementById('movieTitle').value,
+                description: document.getElementById('movieDescription').value,
+                category: document.getElementById('movieCategory').value,
+                language: document.getElementById('movieLanguage').value,
+                tags: document.getElementById('movieTags').value,
+                poster: document.getElementById('moviePoster').value,
+                video: document.getElementById('movieVideo').value
+            };
+
+            saveMovie(movieData);
+            closeModal('movieModal');
+        }
+
+        function handlePromotionSubmit(e) {
+            e.preventDefault();
+            
+            const promoData = {
+                id: document.getElementById('promotionId').value,
+                image: document.getElementById('promotionImage').value,
+                link: document.getElementById('promotionLink').value,
+                status: document.getElementById('promotionStatus').checked
+            };
+
+            savePromotion(promoData);
+            closeModal('promotionModal');
+        }
+
+        // Utility Functions
+        function setupEventListeners() {
+            // Login
+            loginForm.addEventListener('submit', handleLogin);
+            
+            // Navigation
+            document.querySelectorAll('.nav-links a').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    switchTab(link.getAttribute('data-tab'));
+                });
+            });
+
+            // Modals
+            document.getElementById('addMovieBtn').addEventListener('click', () => openMovieModal());
+            document.getElementById('addPromotionBtn').addEventListener('click', () => openPromotionModal());
+            
+            document.getElementById('movieForm').addEventListener('submit', handleMovieSubmit);
+            document.getElementById('promotionForm').addEventListener('submit', handlePromotionSubmit);
+            
+            // Preview updates
+            document.getElementById('moviePoster').addEventListener('input', (e) => updatePosterPreview(e.target.value));
+            document.getElementById('movieVideo').addEventListener('input', (e) => updateVideoPreview(e.target.value));
+            document.getElementById('promotionImage').addEventListener('input', (e) => updatePromotionPreview(e.target.value));
+            
+            // Close modals
+            document.querySelectorAll('.close-modal').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.modal').forEach(modal => {
+                        modal.style.display = 'none';
+                    });
+                });
+            });
+
+            // Settings
+            document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+            
+            // Theme toggle
+            document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+            
+            // Menu toggle for mobile
+            document.getElementById('menuToggle').addEventListener('click', toggleSidebar);
+        }
+
+        function switchTab(tabName) {
+            // Update navigation
+            document.querySelectorAll('.nav-links a').forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('data-tab') === tabName) {
+                    link.classList.add('active');
+                }
+            });
+
+            // Update content
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.id === tabName) {
+                    tab.classList.add('active');
+                }
+            });
+
+            // Update page title
+            document.getElementById('pageTitle').textContent = 
+                tabName.charAt(0).toUpperCase() + tabName.slice(1);
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        function showAlert(message, type) {
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            
+            document.querySelector('.main-content').insertBefore(alert, document.querySelector('.main-content').firstChild);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 3000);
+        }
+
+        function exportData() {
+            const data = {
+                movies: movies,
+                promotions: promotions,
+                exportDate: new Date().toISOString()
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'vidsporn-backup.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showAlert('Data exported successfully', 'success');
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('light-theme');
+            const themeIcon = document.getElementById('themeIcon');
+            const themeText = document.getElementById('themeText');
+            
+            if (document.body.classList.contains('light-theme')) {
+                themeIcon.textContent = '☀️';
+                themeText.textContent = 'Light';
+            } else {
+                themeIcon.textContent = '🌙';
+                themeText.textContent = 'Dark';
+            }
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('active');
+        }
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
